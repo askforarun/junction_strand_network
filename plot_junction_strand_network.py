@@ -3,7 +3,7 @@
 Plot a coarse Junction-Strand Network from a single exported edge CSV map.
 
 Input files are expected to come from:
-    python analysis/junction_strand_network.py --data ... --pva ... --glu ... --atom1-type ... --atom2-type ... -n ... --csv-out junction_edges.csv
+    python analysis/junction_strand_network.py --data ... --pva ... --glu ... --atom1-type ... --atom2-type ... --csv-out junction_edges.csv
 
 Nodes are GLU junctions. Edges are PVA strands.
 
@@ -192,11 +192,6 @@ def write_junction_strand_network_plot(
             ax=ax,
         )
 
-    ax.set_title(
-        "Junction-Strand Network (junction nodes, strand labels)",
-        fontsize=28 if large else 12,
-        fontweight="bold",
-    )
     ax.set_axis_off()
     fig.tight_layout()
     dpi_val = 300 if large else 220

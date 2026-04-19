@@ -2,17 +2,18 @@
 """
 Build a coarse Junction-Strand Network from a crosslinked LAMMPS data file.
 
-Nodes are GLU rings (junctions). Edges are PVA chains (strands) inferred from
-formed crosslinks whose atom types are provided explicitly. A NetworkX MultiGraph is used so multiple distinct PVA
+Nodes are junctions. Edges are strands inferred from formed crosslinks whose
+atom types are provided explicitly. A NetworkX MultiGraph is used so multiple
+distinct strands can connect the same junction pair.
 When exported to CSV, the generated file is an edge-list containing the following information:
     - edge_id: A unique identifier for the edge (strand).
-    - source: The node_id (ring_id) of the origin GLU junction.
-    - target: The node_id (ring_id) of the destination GLU junction.
-    - pva_chain_id: The ID of the PVA chain connecting the two junctions.
-    - pva_atom_u: The specific PVA atom index at the source endpoint.
-    - pva_atom_v: The specific PVA atom index at the target endpoint.
-    - glu_atom_u: The specific GLU atom index matching the source PVA endpoint.
-    - glu_atom_v: The specific GLU atom index matching the target PVA endpoint.
+    - source: The node_id of the origin junction.
+    - target: The node_id of the destination junction.
+    - pva_chain_id: The ID of the strand connecting the two junctions.
+    - pva_atom_u: The specific strand atom index at the source endpoint.
+    - pva_atom_v: The specific strand atom index at the target endpoint.
+    - glu_atom_u: The specific junction atom index matching the source strand endpoint.
+    - glu_atom_v: The specific junction atom index matching the target strand endpoint.
     - is_self_loop: 1 if the source and target junctions are identical, else 0.
 """
 
@@ -27,8 +28,6 @@ from typing import Any, Dict, Optional, Sequence, Tuple
 
 import networkx as nx
 import numpy as np
-
-from src.system_constants import PVA_ATOMS_PER_MONOMER
 
 _PROJECT_ROOT = Path(__file__).resolve().parent.parent
 if str(_PROJECT_ROOT) not in sys.path:
@@ -85,16 +84,23 @@ def read_crosslink_edges_for_types(
     return crosslink_edges
 
 
-def build_pva_edges_and_chain_map(pva_file: str, shift_index: int):
+def build_pva_edges_and_chain_map(pva_file: str):
     """Build PVA strand endpoint edges from ``PVA.txt``.
 
-    Every second sorted atom id is used as the first endpoint. The second
-    endpoint is offset by ``shift_index``.
+    The file is expected to contain two reactive endpoint atom IDs per strand.
+    Atom IDs are sorted and paired sequentially as ``(0, 1), (2, 3), ...``.
     """
     pva_atoms = np.loadtxt(pva_file).astype(int)
     pva_atoms.sort()
-    first_endpoints = pva_atoms[::2]
-    pva_edges = [(int(u), int(u) + shift_index) for u in first_endpoints]
+    if len(pva_atoms) % 2 != 0:
+        raise ValueError(
+            f"{pva_file} must contain an even number of PVA endpoint atom IDs "
+            "(two reactive atoms per strand)."
+        )
+    pva_edges = [
+        (int(pva_atoms[i]), int(pva_atoms[i + 1]))
+        for i in range(0, len(pva_atoms), 2)
+    ]
     all_pva_atoms = {atom for edge in pva_edges for atom in edge}
     pva_atom_to_chain = {}
     for u, v in pva_edges:
@@ -105,26 +111,36 @@ def build_pva_edges_and_chain_map(pva_file: str, shift_index: int):
 
 
 def build_glu_ring_maps(glu_file: str):
-    """Build GLU ring membership maps from ``GLU.txt``."""
+    """Build junction membership maps from ``GLU.txt``.
+
+    The file is expected to contain four reactive atom IDs per junction.
+    Atom IDs are sorted and grouped sequentially as ``(0, 1, 2, 3), ...``.
+    """
     glu_atoms = np.loadtxt(glu_file).astype(int)
     glu_atoms.sort()
-    ring_seeds = glu_atoms.tolist()[::4]
+    if len(glu_atoms) % 4 != 0:
+        raise ValueError(
+            f"{glu_file} must contain a multiple of four junction atom IDs "
+            "(four reactive atoms per junction)."
+        )
 
     glu_edges = []
-    for seed in ring_seeds:
-        j = int(seed)
-        glu_edges.extend([(j, j + 2), (j + 2, j + 12), (j + 12, j + 10), (j + 10, j)])
-
-    glu_graph = nx.Graph()
-    glu_graph.add_edges_from(glu_edges)
-
     glu_ring_id = {}
     ring_to_atoms = {}
-    for ring_id, component in enumerate(nx.connected_components(glu_graph)):
-        component_set = {int(atom) for atom in component}
+    for ring_id, start in enumerate(range(0, len(glu_atoms), 4)):
+        component = [int(atom) for atom in glu_atoms[start:start + 4]]
+        component_set = set(component)
         ring_to_atoms[ring_id] = component_set
         for atom in component_set:
             glu_ring_id[atom] = ring_id
+        glu_edges.extend(
+            [
+                (component[0], component[1]),
+                (component[1], component[2]),
+                (component[2], component[3]),
+                (component[3], component[0]),
+            ]
+        )
 
     return glu_edges, glu_ring_id, ring_to_atoms, set(glu_ring_id.keys())
 
@@ -133,7 +149,6 @@ def build_junction_strand_network(
     data_file: str,
     pva_file: str,
     glu_file: str,
-    n: int,
     atom1_type: int,
     atom2_type: int,
     allow_loop_edges: bool = False,
@@ -142,25 +157,24 @@ def build_junction_strand_network(
 
     Args:
         data_file: Crosslinked LAMMPS data file.
-        pva_file: PVA index file used to define chain endpoints.
-        glu_file: GLU index file used to define ring membership.
-        n: Number of repeat units per PVA chain.
+        pva_file: PVA reactive atom ID file used to define chain endpoints.
+        glu_file: GLU reactive atom ID file used to define junction membership.
         atom1_type: First crosslink atom type in the LAMMPS data file.
         atom2_type: Second crosslink atom type in the LAMMPS data file.
         allow_loop_edges: If True, allow a PVA chain whose two endpoints map to
-            the same GLU ring to be represented as a self-loop edge. If False,
+            the same junction to be represented as a self-loop edge. If False,
             such a chain raises ValueError.
 
     Returns:
-        A MultiGraph with GLU ring nodes and one PVA-chain edge per strand.
+        A MultiGraph with junction nodes and one strand edge per chain.
 
     Raises:
         ValueError: If a formed bond between the configured atom types
-            cannot be mapped to the expected PVA endpoint / GLU ring sets, or if a participating chain does not have
-            exactly one formed crosslink on each endpoint. Distinct GLU rings are
-            also required unless ``allow_loop_edges`` is True.
+            cannot be mapped to the expected strand endpoint / junction atom
+            sets, or if a participating chain does not have exactly one formed
+            crosslink on each endpoint. Distinct junctions are also required
+            unless ``allow_loop_edges`` is True.
     """
-    shift_index = (PVA_ATOMS_PER_MONOMER * n - 2) - 1
     atom_types = read_atom_types_from_lammps_data(data_file)
     crosslink_edges = read_crosslink_edges_for_types(
         data_file,
@@ -168,9 +182,7 @@ def build_junction_strand_network(
         atom1_type=atom1_type,
         atom2_type=atom2_type,
     )
-    pva_edges, all_pva_atoms, pva_atom_to_chain = build_pva_edges_and_chain_map(
-        pva_file, shift_index
-    )
+    pva_edges, all_pva_atoms, pva_atom_to_chain = build_pva_edges_and_chain_map(pva_file)
     _, glu_ring_id, _, _ = build_glu_ring_maps(glu_file)
 
     chain_endpoints = {min(u, v): (u, v) for u, v in pva_edges}
@@ -184,7 +196,7 @@ def build_junction_strand_network(
         else:
             raise ValueError(
                 f"Crosslink bond ({a}, {b}) could not be mapped to a PVA endpoint "
-                "and a GLU ring from the provided PVA/GLU index files."
+                "and a GLU junction from the provided PVA/GLU atom ID files."
             )
 
         chain_id = pva_atom_to_chain[pva_atom]
@@ -222,7 +234,7 @@ def build_junction_strand_network(
         glu_atom_v, ring_v = by_endpoint[endpoint_v][0]
         if ring_u == ring_v and not allow_loop_edges:
             raise ValueError(
-                f"PVA chain {chain_id} connects twice to GLU ring {ring_u}; "
+                f"PVA chain {chain_id} connects twice to GLU junction {ring_u}; "
                 "distinct junctions are required."
             )
 
@@ -342,7 +354,7 @@ def summarize_loop_defects(graph: nx.MultiGraph) -> Dict[str, Any]:
     """Summarize self-loop strand defects in a Junction-Strand Network.
 
     A self-loop strand is a PVA chain whose two endpoints are crosslinked to
-    the same GLU junction. The input graph should be built with
+    the same junction. The input graph should be built with
     ``allow_loop_edges=True`` if loop defects are possible.
     """
     components = sorted(nx.connected_components(graph), key=len, reverse=True)
@@ -444,7 +456,7 @@ def format_loop_defect_summary(summary: Dict[str, Any]) -> str:
     if not summary["loop_details"]:
         lines.append("No loops detected.")
     else:
-        lines.append("chain_u  chain_v  shared_rings  comp_id  pva_chain_id")
+        lines.append("chain_u  chain_v  shared_junctions  comp_id  pva_chain_id")
         for detail in summary["loop_details"]:
             lines.append(
                 f"{detail['pva_atom_u']}  {detail['pva_atom_v']}  "
@@ -463,8 +475,8 @@ def export_junction_strand_network_data(
 
     Columns:
     - edge_id: A unique identifier for the edge (strand).
-    - source: The node_id (ring_id) of the origin GLU junction.
-    - target: The node_id (ring_id) of the destination GLU junction.
+    - source: The node_id of the origin junction.
+    - target: The node_id of the destination junction.
     - pva_chain_id: The ID of the PVA chain connecting the two junctions.
     - pva_atom_u: The specific PVA atom index at the source endpoint.
     - pva_atom_v: The specific PVA atom index at the target endpoint.
@@ -582,11 +594,10 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         )
     )
     parser.add_argument("--data", required=True, help="Crosslinked LAMMPS data file")
-    parser.add_argument("--pva", required=True, help="PVA index file (e.g. PVA.txt)")
-    parser.add_argument("--glu", required=True, help="GLU index file (e.g. GLU.txt)")
+    parser.add_argument("--pva", required=True, help="PVA reactive atom ID file (e.g. PVA.txt)")
+    parser.add_argument("--glu", required=True, help="GLU reactive atom ID file (e.g. GLU.txt)")
     parser.add_argument("--atom1-type", type=int, required=True, help="First crosslink atom type in the data file")
     parser.add_argument("--atom2-type", type=int, required=True, help="Second crosslink atom type in the data file")
-    parser.add_argument("-n", type=int, required=True, help="PVA repeat units per chain")
     parser.add_argument("--csv-out", help="Optional CSV output path for network edge data.")
     parser.add_argument("--report-out", help="Optional text report output path.")
     args = parser.parse_args(argv)
@@ -595,7 +606,6 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         args.data,
         args.pva,
         args.glu,
-        args.n,
         atom1_type=args.atom1_type,
         atom2_type=args.atom2_type,
     )
