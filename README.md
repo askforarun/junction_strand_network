@@ -103,6 +103,7 @@ second uses `(75032, 75034, 75042, 75044)`.
 - Current Input Mapping
 - Command Reference
 - Tutorial
+- Example Report Output
 - How It Works
 - Output CSV Columns
 - What To Check
@@ -195,6 +196,35 @@ python junction_strand_network.py \
   --atom2-type 10 \
   --csv-out junction_edges.csv \
   --report-out junction_strand_network_report.txt
+```
+
+### Example Report Output
+
+For the example files included in this repository, the generated topology report
+is:
+
+```text
+Junction-Strand Network Summary
+================================
+GLU junction nodes: 150
+PVA strand edges: 300
+Unique junction connections: 300
+Parallel strand edges: 0
+Self-loop strands: 0
+Average junction functionality: 4.000000
+Max junction functionality: 4
+Functionality distribution: 4:150
+Average projected junction degree: 4.000000
+Max projected junction degree: 4
+Projected degree distribution: 4:150
+Connected components: 1
+Largest connected component size: 150
+Connected: YES
+Projected graph 4-regular: YES
+4-graph connectivity: YES
+Path metric scope: full_graph
+Average shortest path length: 19.127517
+Diameter: 38
 ```
 
 ### 2. Plot the Network
