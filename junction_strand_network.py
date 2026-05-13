@@ -9,7 +9,6 @@ When exported to CSV, the generated file is an edge-list containing the followin
     - edge_id: A unique identifier for the edge (strand).
     - source: The node_id of the origin junction.
     - target: The node_id of the destination junction.
-    - pva_chain_id: The ID of the strand connecting the two junctions.
     - pva_atom_u: The specific strand atom index at the source endpoint.
     - pva_atom_v: The specific strand atom index at the target endpoint.
     - glu_atom_u: The specific junction atom index matching the source strand endpoint.
@@ -477,7 +476,6 @@ def export_junction_strand_network_data(
     - edge_id: A unique identifier for the edge (strand).
     - source: The node_id of the origin junction.
     - target: The node_id of the destination junction.
-    - pva_chain_id: The ID of the PVA chain connecting the two junctions.
     - pva_atom_u: The specific PVA atom index at the source endpoint.
     - pva_atom_v: The specific PVA atom index at the target endpoint.
     - glu_atom_u: The specific GLU atom index matching the source PVA endpoint.
@@ -491,7 +489,6 @@ def export_junction_strand_network_data(
                 "edge_id",
                 "source",
                 "target",
-                "pva_chain_id",
                 "pva_atom_u",
                 "pva_atom_v",
                 "glu_atom_u",
@@ -503,16 +500,16 @@ def export_junction_strand_network_data(
         for edge_id, (u, v, _key, attrs) in enumerate(
             sorted(
                 graph.edges(keys=True, data=True),
-                key=lambda item: (item[0][1], item[1][1], item[3].get("pva_chain_id", -1)),
+                key=lambda item: (item[0][1], item[1][1], item[3].get("pva_atom_u", -1)),
             ),
             start=1,
         ):
+            attrs["edge_id"] = edge_id
             writer.writerow(
                 {
                     "edge_id": edge_id,
                     "source": u[1],
                     "target": v[1],
-                    "pva_chain_id": attrs.get("pva_chain_id", ""),
                     "pva_atom_u": attrs.get("pva_atom_u", ""),
                     "pva_atom_v": attrs.get("pva_atom_v", ""),
                     "glu_atom_u": attrs.get("glu_atom_u", ""),

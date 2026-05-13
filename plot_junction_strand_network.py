@@ -47,7 +47,7 @@ def read_junction_strand_network_data(csv_file: str) -> nx.MultiGraph:
                 source,
                 target,
                 edge_id=int(row["edge_id"]),
-                pva_chain_id=int(row["pva_chain_id"]) if row["pva_chain_id"] else None,
+                pva_chain_id=int(row["pva_chain_id"]) if row.get("pva_chain_id") else None,
                 pva_atom_u=int(row["pva_atom_u"]) if row["pva_atom_u"] else None,
                 pva_atom_v=int(row["pva_atom_v"]) if row["pva_atom_v"] else None,
                 glu_atom_u=int(row["glu_atom_u"]) if row["glu_atom_u"] else None,
@@ -73,7 +73,7 @@ def write_junction_strand_network_plot(
         output_file: Path to save the image.
         layout: String algorithm identifier ("spring" or "kk").
         with_labels: Whether to overlay GLU junction IDs onto the nodes.
-        with_edge_labels: Whether to overlay PVA strand IDs onto the edges.
+        with_edge_labels: Whether to overlay sequential edge IDs onto the edges.
         large: Scale up to a massive 40x40 high-DPI canvas with thicker edges and clear node colors.
     """
     os.environ.setdefault("MPLCONFIGDIR", tempfile.gettempdir())
@@ -167,15 +167,15 @@ def write_junction_strand_network_plot(
         edge_labels = {}
         for u, v in projection.edges():
             edge_data = graph.get_edge_data(u, v, default={})
-            pva_ids = sorted(
+            edge_ids = sorted(
                 {
-                    attrs.get("pva_chain_id")
+                    attrs.get("edge_id")
                     for attrs in edge_data.values()
-                    if attrs.get("pva_chain_id") is not None
+                    if attrs.get("edge_id") is not None
                 }
             )
-            if pva_ids:
-                edge_labels[(u, v)] = ",".join(str(pva_id) for pva_id in pva_ids)
+            if edge_ids:
+                edge_labels[(u, v)] = ",".join(str(edge_id) for edge_id in edge_ids)
 
         nx.draw_networkx_edge_labels(
             projection,
@@ -226,7 +226,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     parser.add_argument(
         "--edge-labels",
         action="store_true",
-        help="Draw edge labels (PVA strand ids).",
+        help="Draw edge labels (sequential edge ids).",
     )
     args = parser.parse_args(argv)
 
