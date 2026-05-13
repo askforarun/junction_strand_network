@@ -79,11 +79,11 @@ python plot_junction_strand_network.py \
 
 Full junction-strand network:
 
-![Full junction-strand network](junction_strand_network.png)
+![Full junction-strand network](./junction_strand_network.png)
 
 Zoomed local junction-strand motif:
 
-![Zoomed junction-strand motif](junction_strand_network_zoom.png)
+![Zoomed junction-strand motif](./junction_strand_network_zoom.png)
 
 ## CSV Schema and Column Meanings
 
@@ -125,6 +125,27 @@ Legacy note:
 - Junction functionality / projected degree distribution
 - 4-regular and 4-graph-connectivity checks
 - Self-loop and parallel-edge diagnostics
+
+### Current Report Interpretation (Example in This Repo)
+
+For the current example data shipped in this repo, the report values are:
+
+- `GLU junction nodes: 150`
+- `PVA strand edges: 300`
+- `Parallel strand edges: 0`
+- `Self-loop strands: 0`
+- `Functionality distribution: 4:150`
+- `Connected components: 1`
+- `Connected: YES`
+- `Projected graph 4-regular: YES`
+- `4-graph connectivity: YES`
+
+Interpretation:
+
+- The network is fully connected as one macroscopic component.
+- Every GLU junction has the expected functionality of 4 (ideal `B4` behavior).
+- No topological defects are detected in this sample (`0` self-loops, `0` parallel strands).
+- This is consistent with a clean loop-free `A2+B4` junction-strand topology.
 
 ## Typical Validation Targets (Ideal Loop-Free A2+B4)
 
