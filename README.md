@@ -4,9 +4,6 @@ Standalone Python tools to convert a crosslinked atomistic network into a
 coarse junction-strand graph, export strand-level connectivity as CSV, and
 plot the network for topology verification.
 
-This repository is fully standalone and does not depend on the `hydrogel_simulation`
-repository or signac workflow execution.
-
 ## What This Repo Contains
 
 - `junction_strand_network.py`
@@ -77,6 +74,16 @@ python plot_junction_strand_network.py \
   --labels \
   --edge-labels
 ```
+
+## Network Diagrams
+
+Full junction-strand network:
+
+![Full junction-strand network](junction_strand_network.png)
+
+Zoomed local junction-strand motif:
+
+![Zoomed junction-strand motif](junction_strand_network_zoom.png)
 
 ## CSV Schema and Column Meanings
 
