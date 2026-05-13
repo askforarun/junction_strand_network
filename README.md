@@ -105,10 +105,10 @@ Detailed meanings:
 | `edge_id` | A simple sequential edge number in the exported CSV: `1, 2, 3, ...`. This is an edge/row label. |
 | `source` | The GLU junction ID at one end of the PVA strand. |
 | `target` | The GLU junction ID at the other end of the PVA strand. |
-| `pva_atom_u` | The PVA endpoint atom index bonded to the `source` GLU junction. |
-| `pva_atom_v` | The PVA endpoint atom index bonded to the `target` GLU junction. |
-| `glu_atom_u` | The reactive GLU atom index bonded to `pva_atom_u`. |
-| `glu_atom_v` | The reactive GLU atom index bonded to `pva_atom_v`. |
+| `pva_atom_u` | The PVA endpoint atom index that forms the covalent PVA-GLU C-C crosslink bond at the `source` junction side. |
+| `pva_atom_v` | The PVA endpoint atom index that forms the covalent PVA-GLU C-C crosslink bond at the `target` junction side. |
+| `glu_atom_u` | The reactive GLU carbon atom index covalently bonded to `pva_atom_u` (the source-side PVA-GLU C-C bond pair). |
+| `glu_atom_v` | The reactive GLU carbon atom index covalently bonded to `pva_atom_v` (the target-side PVA-GLU C-C bond pair). |
 | `is_self_loop` | `0` if the PVA strand connects two different GLU junctions; `1` if both ends connect to the same GLU junction. For the validated networks in this repo, this should be `0` for all edges. |
 
 ## Topology Checks Reported
