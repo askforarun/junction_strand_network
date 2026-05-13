@@ -79,11 +79,11 @@ python plot_junction_strand_network.py \
 
 Full junction-strand network:
 
-![Full junction-strand network](./junction_strand_network.png)
+![Full junction-strand network](docs/junction_strand_network_readme.png)
 
 Zoomed local junction-strand motif:
 
-![Zoomed junction-strand motif](./junction_strand_network_zoom.png)
+![Zoomed junction-strand motif](docs/junction_strand_network_zoom_readme.png)
 
 ## CSV Schema and Column Meanings
 
