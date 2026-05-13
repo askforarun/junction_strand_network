@@ -111,6 +111,14 @@ Detailed meanings:
 | `glu_atom_v` | The reactive GLU carbon atom index covalently bonded to `pva_atom_v` (the target-side PVA-GLU C-C bond pair). |
 | `is_self_loop` | `0` if the PVA strand connects two different GLU junctions; `1` if both ends connect to the same GLU junction. For the validated networks in this repo, this should be `0` for all edges. |
 
+Short example from the diagram:
+
+- Consider junction nodes `62` and `64` connected by edge label `129` in the zoomed network image.
+- The corresponding CSV row is:
+  `129,62,64,32001,32248,76935,76985,0`
+- Interpretation:
+  `edge_id = 129` is the plotted strand label, `source = 62` and `target = 64` are the two GLU junction nodes, (`pva_atom_u`, `glu_atom_u`) = (`32001`, `76935`) is one covalent PVA-GLU C-C bond pair, (`pva_atom_v`, `glu_atom_v`) = (`32248`, `76985`) is the other end bond pair, and `is_self_loop = 0` confirms this strand links two distinct junctions.
+
 ## Topology Checks Reported
 
 `junction_strand_network_report.txt` includes:
