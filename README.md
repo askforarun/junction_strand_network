@@ -111,11 +111,6 @@ Detailed meanings:
 | `glu_atom_v` | The reactive GLU atom index bonded to `pva_atom_v`. |
 | `is_self_loop` | `0` if the PVA strand connects two different GLU junctions; `1` if both ends connect to the same GLU junction. For the validated networks in this repo, this should be `0` for all edges. |
 
-Legacy note:
-
-- Older CSV files may also include `pva_chain_id`.
-- In the older exporter, `pva_chain_id` was the identifier used for that PVA strand, which in practice was the lower atom index of the two reactive PVA endpoint atoms.
-
 ## Topology Checks Reported
 
 `junction_strand_network_report.txt` includes:
