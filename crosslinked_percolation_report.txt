@@ -1,0 +1,62 @@
+============================================================
+PERCOLATION ANALYSIS REPORT
+============================================================
+
+Bond graph definition:
+  Nodes: all atoms in the Atoms section
+  Edges: all bonds in the Bonds section
+
+Connected components: 1
+Disconnected components (excluding largest): 0
+Percolating components: 1
+Single-atom components: 0
+Multi-atom components: 1
+
+Component size distribution:
+  Largest:  41250 atoms
+  Fraction in largest: 100.0%
+  Atoms outside largest: 0
+
+Per-component percolation:
+  Component   0:  41250 atoms | dim=3 | percolates [XYZ] | wrapping bonds X:324 Y:332 Z:334 | span X:7 Y:8 Z:11
+
+============================================================
+SYSTEM-LEVEL PERCOLATION SUMMARY
+============================================================
+  Percolates in X: YES  (324 wrapping bonds)
+  Percolates in Y: YES  (332 wrapping bonds)
+  Percolates in Z: YES  (334 wrapping bonds)
+
+  Fully percolated (X+Y+Z): YES
+============================================================
+
+LARGEST COMPONENT SUMMARY
+============================================================
+  Largest component id: 0 (41250 atoms, 100.0% of system)
+  Largest component percolation: dim=3 [XYZ]
+  Largest component spans X+Y+Z: YES
+  Largest component fraction: 1.0000
+============================================================
+
+Summary: X=YES Y=YES Z=YES
+
+============================================================
+JUNCTION-STRAND BRANCHING GATE
+============================================================
+  Junction-strand connected: YES
+  Max projected junction degree: 4
+  Branching degree threshold: 3
+  Projected graph 4-regular: YES
+  4-graph connectivity: YES
+  Branching gate pass: YES
+
+================ LOOP SUMMARY ================
+Total self-loop strands detected : 0
+Junction-strand connected components: 1
+Largest junction-strand component (cid=0, junctions=150, strands=300, loops=0)
+Loops in disconnected components: 0
+Component summaries:
+  cid=0 junctions=150 strands=300 loops=0
+================================================
+
+No loops detected.
