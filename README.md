@@ -138,8 +138,8 @@ The diagrams below show the production n=25, replica 1 network with 900 GLU
 junctions and 1800 PVA strands, corresponding to `examples/production_n25`.
 They represent connectivity rather than molecular geometry.
 
-Full junction-strand network, with the selected junction highlighted and labels
-omitted for clarity:
+Full junction-strand network, with the selected junction highlighted; GLU junction
+IDs (node labels) and PVA strand IDs (edge labels) are omitted for clarity:
 
 ![Full junction-strand network](docs/junction_strand_network_readme.png)
 
