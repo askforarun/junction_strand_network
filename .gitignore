@@ -6,3 +6,5 @@ __pycache__/
 *.csv
 !docs/*.png
 !README.md
+results/
+!examples/**/junction_edges.csv

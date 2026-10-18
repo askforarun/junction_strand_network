@@ -28,11 +28,22 @@ from typing import Any, Dict, Optional, Sequence, Tuple
 import networkx as nx
 import numpy as np
 
-_PROJECT_ROOT = Path(__file__).resolve().parent.parent
-if str(_PROJECT_ROOT) not in sys.path:
-    sys.path.insert(0, str(_PROJECT_ROOT))
-
 JunctionNode = Tuple[str, int]
+
+
+def _read_reactive_ids(filename: str, group_size: int) -> np.ndarray:
+    """Validate one-based reactive IDs before inferring molecule membership."""
+    values = np.loadtxt(filename, ndmin=1).reshape(-1)
+    if not values.size or not np.all(np.isfinite(values)):
+        raise ValueError(f"{filename} must contain nonempty finite atom IDs")
+    if np.any(values <= 0) or np.any(values != np.floor(values)):
+        raise ValueError(f"{filename} must contain positive integer atom IDs")
+    ids = values.astype(int)
+    if len(np.unique(ids)) != ids.size:
+        raise ValueError(f"{filename} contains duplicate reactive atom IDs")
+    if ids.size % group_size:
+        raise ValueError(f"{filename} must contain a multiple of {group_size} atom IDs")
+    return np.sort(ids)
 
 
 def read_atom_types_from_lammps_data(datafile: str) -> dict:
@@ -89,8 +100,7 @@ def build_pva_edges_and_chain_map(pva_file: str):
     The file is expected to contain two reactive endpoint atom IDs per strand.
     Atom IDs are sorted and paired sequentially as ``(0, 1), (2, 3), ...``.
     """
-    pva_atoms = np.loadtxt(pva_file).astype(int)
-    pva_atoms.sort()
+    pva_atoms = _read_reactive_ids(pva_file, 2)
     if len(pva_atoms) % 2 != 0:
         raise ValueError(
             f"{pva_file} must contain an even number of PVA endpoint atom IDs "
@@ -115,8 +125,7 @@ def build_glu_ring_maps(glu_file: str):
     The file is expected to contain four reactive atom IDs per junction.
     Atom IDs are sorted and grouped sequentially as ``(0, 1, 2, 3), ...``.
     """
-    glu_atoms = np.loadtxt(glu_file).astype(int)
-    glu_atoms.sort()
+    glu_atoms = _read_reactive_ids(glu_file, 4)
     if len(glu_atoms) % 4 != 0:
         raise ValueError(
             f"{glu_file} must contain a multiple of four junction atom IDs "
@@ -183,6 +192,11 @@ def build_junction_strand_network(
     )
     pva_edges, all_pva_atoms, pva_atom_to_chain = build_pva_edges_and_chain_map(pva_file)
     _, glu_ring_id, _, _ = build_glu_ring_maps(glu_file)
+    if all_pva_atoms.intersection(glu_ring_id):
+        raise ValueError("PVA and GLU reactive atom IDs must be disjoint")
+    missing_ids = (all_pva_atoms | set(glu_ring_id)) - {int(x) for x in atom_types}
+    if missing_ids:
+        raise ValueError(f"Reactive atom IDs absent from Atoms section: {sorted(missing_ids)[:10]}")
 
     chain_endpoints = {min(u, v): (u, v) for u, v in pva_edges}
     chain_records: Dict[int, list[Tuple[int, int, int]]] = defaultdict(list)
@@ -200,6 +214,17 @@ def build_junction_strand_network(
 
         chain_id = pva_atom_to_chain[pva_atom]
         chain_records[chain_id].append((pva_atom, glu_atom, glu_ring_id[glu_atom]))
+
+    missing_chains = set(chain_endpoints) - set(chain_records)
+    if missing_chains:
+        raise ValueError(f"PVA strands have no formed crosslinks: {sorted(missing_chains)[:10]}")
+    junction_site_counts = defaultdict(int)
+    for records in chain_records.values():
+        for _pva_atom, glu_atom, _ring_id in records:
+            junction_site_counts[glu_atom] += 1
+    invalid_sites = [site for site in glu_ring_id if junction_site_counts[site] != 1]
+    if invalid_sites:
+        raise ValueError(f"GLU reactive sites must each form one crosslink: {invalid_sites[:10]}")
 
     graph = nx.MultiGraph()
 

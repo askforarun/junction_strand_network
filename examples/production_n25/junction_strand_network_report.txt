@@ -1,0 +1,21 @@
+Junction-Strand Network Summary
+================================
+GLU junction nodes: 900
+PVA strand edges: 1800
+Unique junction connections: 1800
+Parallel strand edges: 0
+Self-loop strands: 0
+Average junction functionality: 4.000000
+Max junction functionality: 4
+Functionality distribution: 4:900
+Average projected junction degree: 4.000000
+Max projected junction degree: 4
+Projected degree distribution: 4:900
+Connected components: 1
+Largest connected component size: 900
+Connected: YES
+Projected graph 4-regular: YES
+4-graph connectivity: YES
+Path metric scope: full_graph
+Average shortest path length: 8.742267
+Diameter: 16
