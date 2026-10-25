@@ -138,12 +138,13 @@ The diagrams below show the production n=25, replica 1 network with 900 GLU
 junctions and 1800 PVA strands, corresponding to `examples/production_n25`.
 They represent connectivity rather than molecular geometry.
 
-Full junction-strand network, with the selected junction highlighted; GLU junction
+Full junction-strand network, with junction `450` highlighted; GLU junction
 IDs (node labels) and PVA strand IDs (edge labels) are omitted for clarity:
 
 ![Full junction-strand network](docs/junction_strand_network_readme.png)
 
-Four-branch local motif extracted from the same network. Node labels identify GLU
+Four-branch local motif of junction `450`, highlighted in the full network above.
+Node labels identify GLU
 junctions, and edge labels identify PVA strands in the exported graph. The other
 connections of the neighboring junctions are omitted:
 
@@ -175,13 +176,19 @@ Detailed meanings:
 | `glu_atom_v` | The reactive GLU carbon atom index covalently bonded to `pva_atom_v` (the target-side PVA-GLU C-C bond pair). |
 | `is_self_loop` | `0` if the PVA strand connects two different GLU junctions; `1` if both ends connect to the same GLU junction. For the validated networks in this repo, this should be `0` for all edges. |
 
-Short example from the diagram:
+Example from the current production diagram and
+`examples/production_n25/junction_edges.csv`: strand `350` connects junctions
+`179` and `450`. Its CSV row is:
 
-- Consider junction nodes `62` and `64` connected by edge label `129` in the zoomed network image.
-- The corresponding CSV row is:
-  `129,62,64,15617,15736,38535,38585,0`
-- Interpretation:
-  `edge_id = 129` is the plotted strand label, `source = 62` and `target = 64` are the two GLU junction nodes, (`pva_atom_u`, `glu_atom_u`) = (`15617`, `38535`) is one covalent PVA-GLU C-C bond pair, (`pva_atom_v`, `glu_atom_v`) = (`15736`, `38585`) is the other end bond pair, and `is_self_loop = 0` confirms this strand links two distinct junctions.
+```csv
+edge_id,source,target,pva_atom_u,pva_atom_v,glu_atom_u,glu_atom_v,is_self_loop
+350,179,450,143469,143644,325950,334351,0
+```
+
+The endpoint atom pairs `(143469, 325950)` and `(143644, 334351)` are the
+two covalent PVA-GLU C-C crosslink bonds. `is_self_loop = 0` indicates that
+the strand connects distinct junctions. The other three strands incident
+on junction `450` are `169`, `658`, and `891`, matching the close-up above.
 
 ## Topology Checks Reported
 
